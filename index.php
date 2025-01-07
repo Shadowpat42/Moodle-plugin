@@ -140,7 +140,7 @@ echo $OUTPUT->header();
     <section class="stats">
 
         <!-- Активность пользователей -->
-        <div class="stats-panel activity">
+        <div class="stats-panel activity" style="background: #E2FEFE;">
             <p class="panel-label">Активность пользователей</p>
             <div class="panel-content">
                 <div>Сейчас онлайн:</div>
@@ -149,18 +149,17 @@ echo $OUTPUT->header();
                     <img src="Vector.svg" width="29px" height="23px">
                 </div>
             </div>
-            <div class="panel-footer">
+            <div class="panel-footer" style="background: #B9FAFA;">
                 <a href="active_users.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: #D9D9D9; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
                         Открыть
                     </button>
                 </a>
             </div>
         </div>
 
-
         <!-- Средний прогресс пользователей -->
-        <div class="stats-panel discussion">
+        <div class="stats-panel discussion" style="background: #FCE5CD;">
             <p class="panel-label">Прогресс пользователей</p>
             <div class="panel-content">
                 <div>Средний % прохождения курса:</div>
@@ -168,23 +167,22 @@ echo $OUTPUT->header();
                     <?= $average_progress; ?>%
                 </div>
             </div>
-            <div class="panel-footer">
+            <div class="panel-footer" style="background: #FDC896;">
                 <a href="progress_users.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: #D9D9D9; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
                         Открыть
                     </button>
                 </a>
             </div>
         </div>
 
-
         <!-- Количество посещений -->
-        <div class="stats-panel visitors">
+        <div class="stats-panel visitors" style="background: #FEFFD0;">
             <p class="panel-label">Количество посещений</p>
             <div class="panel-content"><?php echo $visitors_html; ?></div>
-            <div class="panel-footer">
+            <div class="panel-footer" style="background: #EEED83;">
                 <a href="visits_users.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: #D9D9D9; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
                         Открыть
                     </button>
                 </a>
@@ -192,41 +190,41 @@ echo $OUTPUT->header();
         </div>
 
         <!-- Время, проведенное на платформе -->
-        <div class="stats-panel time">
+        <div class="stats-panel time" style="background: #ECD0EF;">
             <p class="panel-label">Время, проведенное на платформе</p>
             <div class="panel-content"><?php echo $time_html; ?></div>
-            <div class="panel-footer">
+            <div class="panel-footer" style="background: #EDA3EA;">
                 <a href="time_spent.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: #D9D9D9; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
                         Открыть
                     </button>
                 </a>
             </div>
         </div>
 
-
         <!-- Обсуждение тем -->
-        <div class="stats-panel discussion">
-            <p class="panel-label">Обсуждение тем</p>
+        <div class="stats-panel discussion" style="background: #F4D4D4;">
+            <p class="panel-label">Сообщения пользователей</p>
             <div class="panel-content">
                 <div>Общее количество сообщений:</div>
                 <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 10px;">
                     <?php echo $total_posts; ?>
+                    <img src='message.svg' alt='Сообщения' style='margin-left: 10px; width="25px" height="20px";'>
                 </div>
             </div>
-            <div class="panel-footer">
+            <div class="panel-footer" style="background: #F5A7A7;">
                 <a href="discussion_posts.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: #D9D9D9; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
                         Открыть
                     </button>
                 </a>
             </div>
         </div>
 
-
     </section>
     </body>
     </html>
+
 
 <?php
 // Выводим подвал страницы

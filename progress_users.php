@@ -56,13 +56,13 @@ echo $OUTPUT->header();
     <p class="label-stats">Статистика</p>
 </section>
 
-<section class="info">
-    <p class="info-label">Прогресс пользователей</p>
-    <div class="user-list">
+<section class="info progress-info" style="border: 10px solid #FDC896; padding: 30px; border-radius: 20px;">
+    <h2 style="border-bottom: 5px solid #FDC896; padding-bottom: 15px;">Прогресс прохождения курса</h2>
+    <div class="data-container">
         <?php if (empty($users_progress)) : ?>
             <p>Нет данных о прогрессе пользователей.</p>
         <?php else : ?>
-            <ul>
+            <ol class="labels" style="padding-left: 20px; list-style-type: decimal;">
                 <?php foreach ($users_progress as $user_progress) : ?>
                     <li>
                         <?php
@@ -73,7 +73,7 @@ echo $OUTPUT->header();
                         ?>
                     </li>
                 <?php endforeach; ?>
-            </ul>
+            </ol>
         <?php endif; ?>
     </div>
 </section>

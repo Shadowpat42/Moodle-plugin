@@ -45,13 +45,13 @@ echo $OUTPUT->header();
     <p class="label-stats">Статистика</p>
 </section>
 
-<section class="info">
-    <p class="info-label">Количество посещений сайта</p>
-    <div class="user-list">
+<section class="info visitors-info" style="border: 10px solid #EEED83; padding: 30px; border-radius: 20px;">
+    <h2 style="border-bottom: 5px solid #EEED83; padding-bottom: 15px;">Количество посещений сайта</h2>
+    <div class="data-container">
         <?php if (empty($visits)) : ?>
             <p>Нет данных о посещениях пользователей.</p>
         <?php else : ?>
-            <ul>
+            <ol class="labels" style="padding-left: 20px; list-style-type: decimal;">
                 <?php foreach ($visits as $visit) : ?>
                     <li>
                         <?php
@@ -60,7 +60,7 @@ echo $OUTPUT->header();
                         ?>
                     </li>
                 <?php endforeach; ?>
-            </ul>
+            </ol>
         <?php endif; ?>
     </div>
 </section>

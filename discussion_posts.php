@@ -44,7 +44,6 @@ $posts_count = $DB->get_records_sql("
 // Формируем список пользователей и их количества сообщений
 $user_posts_data = [];
 foreach ($users as $user) {
-    // Проверим, есть ли данные о количестве сообщений для пользователя
     $post_count = isset($posts_count[$user->id]) ? $posts_count[$user->id]->posts_count : 0;
     $user_posts_data[$user->id] = $post_count;
 }
@@ -66,14 +65,15 @@ echo $OUTPUT->header();
     <p class="label-stats">Статистика</p>
 </section>
 
-<section class="info">
-    <p class="info-label">Сообщения пользователей:</p>
-    <ul class="user-list" style="list-style-type: disc; padding-left: 10px;">
+<section class="info discussion-info" style="border: 10px solid #F5A7A7; padding: 30px; border-radius: 20px;">
+    <h2 style="border-bottom: 5px solid #F5A7A7; padding-bottom: 15px;">Сообщения пользователей:</h2>
+    <ul class="user-list" style="list-style-type: none; padding-left: 10px;">
         <?php
         foreach ($user_posts_data as $user_id => $post_count) {
-            // Выводим имя пользователя и количество сообщений
             $user = $users[$user_id];
-            echo "<li>{$user->firstname} {$user->lastname} - {$post_count} сообщений</li>";
+            echo "<li style='margin-bottom: 10px; display: flex; align-items: center;'>
+                    <span>{$user->firstname} {$user->lastname} - {$post_count} сообщений</span>
+                  </li>";
         }
         ?>
     </ul>

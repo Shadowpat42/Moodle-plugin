@@ -75,6 +75,20 @@ body {
     white-space: normal;
 }
 
+.data-container {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 15px;
+}
+
+.info > .data-container {
+    padding: 20px 30px;
+}
+
+.info > .data-container > .labels {
+    padding-left: 30px;
+}
+
 /* Подвал карточек */
 .panel-footer {
     background: #989797;
@@ -103,19 +117,50 @@ body {
 /* Специфические размеры для карточек */
 .activity {
     min-height: 250px;
+    background: #E2FEFE;
+}
+
+.activity > .panel-footer {
+    background: #B9FAFA;
+}
+
+.progress {
+    background: #FCE5CD;
+    min-height: 250px;
+    min-width: 300px;
+    background: #F4D4D4;
+}
+
+.progress > .panel-footer {
+    background: #FDC896;
 }
 
 .visitors {
     min-height: 250px;
+    background: #FEFFD0;
+}
+
+.visitors > .panel-footer {
+    background: #EEED83;
 }
 
 .time {
     min-height: 250px;
+    background: #ECD0EF;
+}
+
+.time > .panel-footer {
+    background: #EDA3EA;
 }
 
 .discussion {
     min-height: 250px;
     min-width: 300px;
+    background: #F4D4D4;
+}
+
+.discussion > .panel-footer {
+    background: #F5A7A7;
 }
 
 /* Адаптивность для мобильных устройств */
@@ -190,6 +235,87 @@ body {
     }
 }
 
+.activity-info {
+    border: 10px solid #B9FAFA;
+}
+
+.activity-info > h2 {
+    border-bottom: 5px solid #B9FAFA;
+}
+
+.progress-info {
+    border: 10px solid #FDC896;
+}
+
+.progress-info > h2 {
+    border-bottom: 5px solid #FDC896;
+}
+
+.visitors-info {
+    border: 10px solid #EEED83;
+}
+
+.visitors-info > h2 {
+    border-bottom: 5px solid #EEED83;
+}
+
+.time-info {
+    border: 10px solid #EDA3EA;
+}
+
+.time-info > h2 {
+    border-bottom: 5px solid #EDA3EA;
+}
+
+.discussion-info {
+    border: 10px solid #F5A7A7;
+}
+
+discussion-info > h2 {
+    border-bottom: 5px solid #F5A7A7;
+}
+
+/* Цветовые изменения от фронтендера */
+
+/* Активность */
+.activity {
+    background: #E2FEFE; /* Новый фон */
+}
+.activity > .panel-footer {
+    background: #B9FAFA; /* Новый цвет подвала */
+}
+
+/* Прогресс */
+.progress {
+    background: #FCE5CD; /* Новый фон */
+}
+.progress > .panel-footer {
+    background: #FDC896; /* Новый цвет подвала */
+}
+
+/* Посещения */
+.visitors {
+    background: #FEFFD0; /* Новый фон */
+}
+.visitors > .panel-footer {
+    background: #EEED83; /* Новый цвет подвала */
+}
+
+/* Время на платформе */
+.time {
+    background: #ECD0EF; /* Новый фон */
+}
+.time > .panel-footer {
+    background: #EDA3EA; /* Новый цвет подвала */
+}
+
+/* Обсуждения */
+.discussion {
+    background: #F4D4D4; /* Новый фон */
+}
+.discussion > .panel-footer {
+    background: #F5A7A7; /* Новый цвет подвала */
+}
 
 
 

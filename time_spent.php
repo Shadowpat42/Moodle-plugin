@@ -73,10 +73,12 @@ echo $OUTPUT->header();
     <p class="label-stats">Статистика</p>
 </section>
 
-<section class="info">
-    <p class="info-label">Время, проведенное на платформе:</p>
-    <div class="user-list" style="list-style-type: disc">
-        <?php echo $time_html; ?>
+<section class="info time-info" style="border: 10px solid #EDA3EA; padding: 30px; border-radius: 20px;">
+    <h2 style="border-bottom: 5px solid #EDA3EA; padding-bottom: 15px;">Время, проведенное на платформе</h2>
+    <div class="data-container">
+        <ol class="labels" style="padding-left: 20px; list-style-type: decimal;">
+            <?php echo $time_html; ?>
+        </ol>
     </div>
 </section>
 

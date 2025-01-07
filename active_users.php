@@ -46,17 +46,17 @@ echo $OUTPUT->header();
     <p class="label-stats">Статистика</p>
 </section>
 
-<section class="info">
-    <p class="info-label">Активные пользователи</p>
+<section class="info activity-info" style="border: 10px solid #B9FAFA; padding: 30px; border-radius: 20px;">
+    <h2 style="border-bottom: 5px solid #B9FAFA; padding-bottom: 15px;">Активные пользователи</h2>
     <div class="user-list">
         <?php if (empty($online_users)) : ?>
             <p>Нет активных пользователей в данный момент.</p>
         <?php else : ?>
-            <ul>
+            <ol style="padding-left: 20px; list-style-type: decimal;">
                 <?php foreach ($online_users as $user) : ?>
                     <li><?php echo $user->firstname . ' ' . $user->lastname; ?></li>
                 <?php endforeach; ?>
-            </ul>
+            </ol>
         <?php endif; ?>
     </div>
 </section>
