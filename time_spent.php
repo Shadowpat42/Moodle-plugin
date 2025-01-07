@@ -66,7 +66,7 @@ echo $OUTPUT->header();
 <html lang="ru">
 <meta charset="utf-8">
 <head>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <section class="bar">

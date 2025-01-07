@@ -131,7 +131,7 @@ echo $OUTPUT->header();
     <html lang="ru">
     <meta charset="utf-8">
     <head>
-        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="css/styles.css">
     </head>
     <body>
     <section class="bar">
@@ -146,7 +146,7 @@ echo $OUTPUT->header();
                 <div>Сейчас онлайн:</div>
                 <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 5px;">
                     <?php echo $online_count; ?>
-                    <img src="Vector.svg" width="29px" height="23px">
+                    <img src="img/Vector.svg" width="29px" height="23px">
                 </div>
             </div>
             <div class="panel-footer" style="background: #B9FAFA;">
@@ -209,7 +209,7 @@ echo $OUTPUT->header();
                 <div>Общее количество сообщений:</div>
                 <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 10px;">
                     <?php echo $total_posts; ?>
-                    <img src='message.svg' alt='Сообщения' style='margin-left: 10px; width="25px" height="20px";'>
+                    <img src='img/message.svg' alt='Сообщения' style='margin-left: 10px; width="25px" height="20px";'>
                 </div>
             </div>
             <div class="panel-footer" style="background: #F5A7A7;">

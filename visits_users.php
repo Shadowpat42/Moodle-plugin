@@ -38,7 +38,7 @@ echo $OUTPUT->header();
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <section class="bar">
