@@ -1,166 +1,118 @@
 <?php
-
 require_once('../../config.php');
 
-// Получаем параметры из запроса
+// 1. Параметры
 $courseid = required_param('courseid', PARAM_INT);
 
-// Проверяем, что пользователь авторизован и имеет доступ к курсу
+// Moodle check
 require_login($courseid);
-
-// Устанавливаем контекст страницы для курса
 $context = context_course::instance($courseid);
 $PAGE->set_context($context);
-
-// Устанавливаем URL для страницы
-$PAGE->set_url(new moodle_url('/local/statistics/time_spent.php', array('courseid' => $courseid)));
-
-// Устанавливаем заголовок страницы
+$PAGE->set_url(new moodle_url('/local/statistics/time_spent.php', ['courseid'=>$courseid]));
 $PAGE->set_title("Время, проведенное на платформе");
-$PAGE->set_heading("Время, проведенное на платформе для курса");
+$PAGE->set_heading("Время, проведенное на платформе");
 
-// Проверка поддержки оконных функций (MariaDB 10.2+)
-$version = $DB->get_field_sql("SELECT VERSION()");
-if (version_compare($version, '10.2', '<')) {
-    echo $OUTPUT->header();
-    echo "<div class='alert alert-danger'>Ваш сервер MariaDB не поддерживает необходимые функции для выполнения этого запроса.</div>";
-    echo $OUTPUT->footer();
-    exit;
-}
+// 2. Упрощенный запрос без CROSS APPLY, используя три разных плейсхолдера
+$sql = "
+    SELECT 
+        u.id,
+        u.firstname,
+        u.lastname,
+        SUM(
+            CASE
+                WHEN (n.timecreated - log.timecreated) <= 600 THEN (n.timecreated - log.timecreated)
+                ELSE 600
+            END
+        ) AS time_spent
+    FROM (
+        SELECT
+            l1.userid,
+            l1.timecreated,
+            (
+                SELECT MIN(l2.timecreated)
+                  FROM {logstore_standard_log} l2
+                 WHERE l2.userid   = l1.userid
+                   AND l2.courseid = :cid2
+                   AND l2.timecreated > l1.timecreated
+            ) AS next_timecreated
+        FROM {logstore_standard_log} l1
+        WHERE l1.courseid = :cid1
+    ) AS log
+    JOIN {user} u ON u.id = log.userid
+    LEFT JOIN {logstore_standard_log} n
+           ON n.userid     = log.userid
+          AND n.timecreated = log.next_timecreated
+          AND n.courseid   = :cid3
+    GROUP BY
+      u.id, u.firstname, u.lastname
+    ORDER BY time_spent DESC
+";
 
-// Получаем список пользователей, зарегистрированных в курсе
-$users = $DB->get_records_sql("
-    SELECT u.id, u.firstname, u.lastname
-    FROM {user} u
-    JOIN {user_enrolments} ue ON ue.userid = u.id
-    JOIN {enrol} e ON e.id = ue.enrolid
-    WHERE e.courseid = :courseid
-", ['courseid' => $courseid]);
+// Параметры — три штуки (одно и то же значение, но разные ключи)
+$params = [
+    'cid1' => $courseid,
+    'cid2' => $courseid,
+    'cid3' => $courseid
+];
 
-if (empty($users)) {
-    // Нет пользователей в курсе
-    echo $OUTPUT->header();
-    ?>
+$timespent = $DB->get_records_sql($sql, $params);
+
+// --- Вывод ---
+echo $OUTPUT->header();
+?>
     <!DOCTYPE html>
     <html lang="ru">
     <head>
         <meta charset="utf-8">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Ваши стили -->
         <link rel="stylesheet" href="css/styles.css">
-        <title>Время, проведенное на платформе</title>
+        <!-- Если нужен Bootstrap -->
+        <link rel="stylesheet"
+              href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+        <title>Время на платформе</title>
     </head>
     <body>
     <section class="bar">
         <p class="label-stats">Статистика</p>
     </section>
 
-    <section class="info time-info container my-4">
-        <h2 class="border-bottom pb-2">Время, проведенное на платформе</h2>
-        <p>Нет пользователей в курсе.</p>
+    <!-- Фиолетовая рамка, как в старом коде -->
+    <section class="info time-info"
+             style="border: 10px solid #EDA3EA; padding: 30px; border-radius: 20px;">
+
+        <!-- Меняем цвет фона заголовка на бежевый + прозрачность -->
+        <h2 style="background: rgba(245, 245, 220, 0.5);
+               padding: 10px;
+               border-bottom: 5px solid #EDA3EA;">
+            Время, проведенное на платформе
+        </h2>
+
+        <div class="data-container" style="margin-top: 20px;">
+            <?php if (empty($timespent)): ?>
+                <p>Нет данных о времени, проведённом пользователями на платформе.</p>
+            <?php else: ?>
+                <ol style="list-style-type: decimal; padding-left: 20px;">
+                    <?php
+                    foreach ($timespent as $user) {
+                        $seconds = (int)$user->time_spent;
+                        if ($seconds > 0) {
+                            $hours   = floor($seconds / 3600);
+                            $minutes = floor(($seconds % 3600) / 60);
+                            $display = $hours . " ч " . $minutes . " мин";
+                        } else {
+                            $display = "Нет данных";
+                        }
+                        echo "<li>".s($user->firstname)." ".s($user->lastname).
+                            " – ".$display."</li>";
+                    }
+                    ?>
+                </ol>
+            <?php endif; ?>
+        </div>
     </section>
 
-    <!-- Подключение Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     </body>
     </html>
-    <?php
-    echo $OUTPUT->footer();
-    exit;
-}
-
-// Оптимизированный запрос без использования CROSS APPLY
-// Получаем время, проведенное пользователями на платформе
-$timespent = $DB->get_records_sql("
-    SELECT 
-        u.id, 
-        u.firstname, 
-        u.lastname, 
-        SUM(
-            CASE 
-                WHEN TIMESTAMPDIFF(SECOND, l1.timecreated, l2.timecreated) <= 600 
-                THEN TIMESTAMPDIFF(SECOND, l1.timecreated, l2.timecreated) 
-                ELSE 600 
-            END
-        ) AS time_spent
-    FROM {user} u
-    JOIN {user_enrolments} ue ON ue.userid = u.id
-    JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid
-    JOIN {logstore_standard_log} l1 ON l1.userid = u.id AND l1.courseid = :courseid
-    LEFT JOIN {logstore_standard_log} l2 ON l2.userid = u.id AND l2.courseid = :courseid AND l2.timecreated = (
-        SELECT MIN(l3.timecreated)
-        FROM {logstore_standard_log} l3
-        WHERE l3.userid = l1.userid AND l3.courseid = l1.courseid AND l3.timecreated > l1.timecreated
-    )
-    GROUP BY u.id, u.firstname, u.lastname
-    ORDER BY time_spent DESC
-", ['courseid' => $courseid]);
-
-$time_html = '';
-foreach ($timespent as $time) {
-    if ($time->time_spent) {
-        $hours = floor($time->time_spent / 3600);
-        $minutes = floor(($time->time_spent % 3600) / 60);
-        $time_html .= "<tr>
-                            <td>" . htmlspecialchars($time->firstname, ENT_QUOTES, 'UTF-8') . "</td>
-                            <td>" . htmlspecialchars($time->lastname, ENT_QUOTES, 'UTF-8') . "</td>
-                            <td>{$hours} часов {$minutes} минут</td>
-                       </tr>";
-    } else {
-        $time_html .= "<tr>
-                            <td>" . htmlspecialchars($time->firstname, ENT_QUOTES, 'UTF-8') . "</td>
-                            <td>" . htmlspecialchars($time->lastname, ENT_QUOTES, 'UTF-8') . "</td>
-                            <td>Нет данных</td>
-                       </tr>";
-    }
-}
-
-// Выводим шапку страницы
-echo $OUTPUT->header();
-?>
-
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
-    <title>Время, проведенное на платформе</title>
-</head>
-<body>
-<section class="bar">
-    <p class="label-stats">Статистика</p>
-</section>
-
-<section class="info time-info container my-4">
-    <h2 class="border-bottom pb-2">Время, проведенное на платформе</h2>
-
-    <!-- Таблица времени -->
-    <div class="table-responsive">
-        <?php if (empty($timespent)) : ?>
-            <p>Нет данных о времени, проведенном пользователями на платформе.</p>
-        <?php else : ?>
-            <table class="table table-striped table-bordered">
-                <thead class="table-dark">
-                <tr>
-                    <th>Имя</th>
-                    <th>Фамилия</th>
-                    <th>Время (часы:минуты)</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php echo $time_html; ?>
-                </tbody>
-            </table>
-        <?php endif; ?>
-    </div>
-</section>
-
-<!-- Подключение Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-
 <?php
-// Выводим подвал страницы
 echo $OUTPUT->footer();
-?>
