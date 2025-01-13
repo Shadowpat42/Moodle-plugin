@@ -1,118 +1,187 @@
 <?php
 require_once('../../config.php');
 
-// 1. Параметры
+// Параметры курса
 $courseid = required_param('courseid', PARAM_INT);
 
-// Moodle check
+// Параметры поиска/сортировки
+$search = optional_param('search', '', PARAM_TEXT);
+$sort   = optional_param('sort', 'time_desc', PARAM_ALPHANUMEXT);
+
+// Проверки Moodle
 require_login($courseid);
 $context = context_course::instance($courseid);
 $PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/local/statistics/time_spent.php', ['courseid'=>$courseid]));
+$PAGE->set_url(new moodle_url('/local/statistics/time_spent.php', ['courseid' => $courseid]));
 $PAGE->set_title("Время, проведенное на платформе");
 $PAGE->set_heading("Время, проведенное на платформе");
 
-// 2. Упрощенный запрос без CROSS APPLY, используя три разных плейсхолдера
+// WHERE для поиска
+$where_search = '';
+$params = [
+    'courseid' => $courseid,
+];
+
+// (3) Если хотите ограничить логи по времени (скажем, последние 90 дней):
+// $where_time = " AND log.timecreated > :logsince ";
+// $params['logsince'] = time() - 90*86400;
+// И включите $where_time в запрос (см. ниже).
+
+if (!empty($search)) {
+    $where_search = " AND (u.firstname LIKE :s1 OR u.lastname LIKE :s2)";
+    $params['s1'] = '%'.$search.'%';
+    $params['s2'] = '%'.$search.'%';
+}
+
+// ORDER BY
+$order_by = '';
+switch ($sort) {
+    case 'time_asc':
+        $order_by = "ORDER BY time_spent ASC";
+        break;
+    case 'time_desc':
+        $order_by = "ORDER BY time_spent DESC";
+        break;
+    case 'name_asc':
+        $order_by = "ORDER BY u.firstname ASC, u.lastname ASC";
+        break;
+    case 'name_desc':
+        $order_by = "ORDER BY u.firstname DESC, u.lastname DESC";
+        break;
+    default:
+        $order_by = "ORDER BY time_spent DESC";
+        break;
+}
+
+// Алгоритм 10-минутных сессий
+// Добавляем log_next.courseid=log.courseid и лог.ограничение
 $sql = "
-    SELECT 
+    SELECT
         u.id,
         u.firstname,
         u.lastname,
         SUM(
             CASE
-                WHEN (n.timecreated - log.timecreated) <= 600 THEN (n.timecreated - log.timecreated)
-                ELSE 600
+                WHEN (log_next.timecreated - log.timecreated) > 0
+                     AND (log_next.timecreated - log.timecreated) <= 600
+                THEN (log_next.timecreated - log.timecreated)
+                ELSE 0
             END
         ) AS time_spent
-    FROM (
-        SELECT
-            l1.userid,
-            l1.timecreated,
-            (
-                SELECT MIN(l2.timecreated)
-                  FROM {logstore_standard_log} l2
-                 WHERE l2.userid   = l1.userid
-                   AND l2.courseid = :cid2
-                   AND l2.timecreated > l1.timecreated
-            ) AS next_timecreated
-        FROM {logstore_standard_log} l1
-        WHERE l1.courseid = :cid1
-    ) AS log
-    JOIN {user} u ON u.id = log.userid
-    LEFT JOIN {logstore_standard_log} n
-           ON n.userid     = log.userid
-          AND n.timecreated = log.next_timecreated
-          AND n.courseid   = :cid3
-    GROUP BY
-      u.id, u.firstname, u.lastname
-    ORDER BY time_spent DESC
+    FROM {user} u
+    JOIN {logstore_standard_log} log
+         ON log.userid = u.id
+         AND log.courseid = :courseid
+         -- $where_time если нужно ограничить лог
+    LEFT JOIN {logstore_standard_log} log_next
+         ON log_next.userid = log.userid
+         AND log_next.courseid = log.courseid
+         AND log_next.timecreated = (
+             SELECT MIN(li.timecreated)
+               FROM {logstore_standard_log} li
+              WHERE li.userid = log.userid
+                AND li.courseid = log.courseid
+                AND li.timecreated > log.timecreated
+         )
+    WHERE 1=1
+    $where_search
+    GROUP BY u.id, u.firstname, u.lastname
+    $order_by
 ";
 
-// Параметры — три штуки (одно и то же значение, но разные ключи)
-$params = [
-    'cid1' => $courseid,
-    'cid2' => $courseid,
-    'cid3' => $courseid
-];
+// Выполняем запрос
+$time_spent_users = $DB->get_records_sql($sql, $params);
 
-$timespent = $DB->get_records_sql($sql, $params);
-
-// --- Вывод ---
+// Вывод
 echo $OUTPUT->header();
 ?>
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="utf-8">
-        <!-- Ваши стили -->
-        <link rel="stylesheet" href="css/styles.css">
-        <!-- Если нужен Bootstrap -->
-        <link rel="stylesheet"
-              href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-        <title>Время на платформе</title>
-    </head>
-    <body>
-    <section class="bar">
-        <p class="label-stats">Статистика</p>
-    </section>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <title>Время, проведенное на платформе</title>
+</head>
+<body>
+<section class="bar">
+    <p class="label-stats" style="margin-bottom: 20px">Статистика</p>
+</section>
 
-    <!-- Фиолетовая рамка, как в старом коде -->
-    <section class="info time-info"
-             style="border: 10px solid #EDA3EA; padding: 30px; border-radius: 20px;">
+<section class="info time-info"
+         style="border: 10px solid #EDA3EA; padding: 30px; border-radius: 20px; max-width: 1050px; margin: auto;">
+    <h2 style="border-bottom: 5px solid #EDA3EA; padding-bottom: 15px;">
+        Время, проведенное на платформе
+    </h2>
 
-        <!-- Меняем цвет фона заголовка на бежевый + прозрачность -->
-        <h2 style="background: rgba(245, 245, 220, 0.5);
-               padding: 10px;
-               border-bottom: 5px solid #EDA3EA;">
-            Время, проведенное на платформе
-        </h2>
+    <!-- Форма поиска и сортировки -->
+    <form method="get" action="time_spent.php" class="row g-3 mb-4">
+        <input type="hidden" name="courseid" value="<?php echo $courseid; ?>">
 
-        <div class="data-container" style="margin-top: 20px;">
-            <?php if (empty($timespent)): ?>
-                <p>Нет данных о времени, проведённом пользователями на платформе.</p>
-            <?php else: ?>
-                <ol style="list-style-type: decimal; padding-left: 20px;">
-                    <?php
-                    foreach ($timespent as $user) {
-                        $seconds = (int)$user->time_spent;
-                        if ($seconds > 0) {
-                            $hours   = floor($seconds / 3600);
-                            $minutes = floor(($seconds % 3600) / 60);
-                            $display = $hours . " ч " . $minutes . " мин";
-                        } else {
-                            $display = "Нет данных";
-                        }
-                        echo "<li>".s($user->firstname)." ".s($user->lastname).
-                            " – ".$display."</li>";
-                    }
-                    ?>
-                </ol>
-            <?php endif; ?>
+        <!-- Поиск -->
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text">Поиск</span>
+                <input type="text" name="search" class="form-control"
+                       placeholder="Имя или фамилия"
+                       value="<?php echo s($search); ?>">
+            </div>
         </div>
-    </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    </body>
-    </html>
+        <!-- Сортировка -->
+        <div class="col-md-4">
+            <select name="sort" class="form-select">
+                <option value="time_desc" <?php if ($sort=='time_desc') echo 'selected'; ?>>Время (убывание)</option>
+                <option value="time_asc"  <?php if ($sort=='time_asc')  echo 'selected'; ?>>Время (возрастание)</option>
+                <option value="name_asc"  <?php if ($sort=='name_asc')  echo 'selected'; ?>>Имя (А-Я)</option>
+                <option value="name_desc" <?php if ($sort=='name_desc') echo 'selected'; ?>>Имя (Я-А)</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">Применить</button>
+        </div>
+    </form>
+
+    <!-- Таблица результатов -->
+    <div class="data-container">
+        <?php if (empty($time_spent_users)): ?>
+            <p>Нет данных о времени, проведенном на платформе.</p>
+        <?php else: ?>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Имя</th>
+                    <th>Фамилия</th>
+                    <th>Время (часы:минуты)</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+                $i = 1;
+                foreach ($time_spent_users as $user) {
+                    $total_seconds = (int)$user->time_spent;
+                    $hours   = floor($total_seconds / 3600);
+                    $minutes = floor(($total_seconds % 3600) / 60);
+                    ?>
+                    <tr>
+                        <td><?php echo $i++; ?></td>
+                        <td><?php echo s($user->firstname); ?></td>
+                        <td><?php echo s($user->lastname); ?></td>
+                        <td><?php echo "{$hours} ч {$minutes} мин"; ?></td>
+                    </tr>
+                <?php } ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 <?php
 echo $OUTPUT->footer();
+?>
