@@ -56,6 +56,14 @@ $sql = "
 
 $visits_users = $DB->get_records_sql($sql, $params);
 
+// Подготовка данных для линейной диаграммы
+$chart_labels = [];
+$chart_data = [];
+foreach ($visits_users as $user) {
+    $chart_labels[] = "{$user->firstname} {$user->lastname}";
+    $chart_data[] = $user->visits;
+}
+
 // Вывод страницы
 echo $OUTPUT->header();
 ?>
@@ -64,12 +72,12 @@ echo $OUTPUT->header();
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Посещения пользователей</title>
 </head>
 <body>
 <section class="bar">
-    <p class="label-stats">Статистика</p><br><br>
+    <p class="label-stats">Статистика</p>
 </section>
 
 <section class="info visitors-info"
@@ -80,7 +88,6 @@ echo $OUTPUT->header();
     <form method="get" action="visits_users.php" class="row g-3 mb-4">
         <input type="hidden" name="courseid" value="<?php echo $courseid; ?>">
 
-        <!-- Поле поиска -->
         <div class="col-md-4">
             <div class="input-group">
                 <span class="input-group-text">Поиск</span>
@@ -89,7 +96,6 @@ echo $OUTPUT->header();
             </div>
         </div>
 
-        <!-- Сортировка -->
         <div class="col-md-4">
             <select name="sort" class="form-select">
                 <option value="visits_desc" <?php echo ($sort == 'visits_desc') ? 'selected' : ''; ?>>Посещения (убывание)</option>
@@ -131,9 +137,46 @@ echo $OUTPUT->header();
             </table>
         <?php endif; ?>
     </div>
+
+    <!-- Линейный график -->
+    <div style="max-width: 800px; margin: auto; padding-top: 20px;">
+        <h3>График посещений пользователей</h3>
+        <canvas id="visitsChart"></canvas>
+    </div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const ctx = document.getElementById('visitsChart').getContext('2d');
+    const visitsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: <?php echo json_encode($chart_labels); ?>,
+            datasets: [{
+                label: 'Количество посещений',
+                data: <?php echo json_encode($chart_data); ?>,
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderWidth: 2,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Пользователи' },
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Количество посещений' },
+                },
+            },
+        },
+    });
+</script>
 </body>
 </html>
 

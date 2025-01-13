@@ -3,8 +3,6 @@ require_once('../../config.php');
 
 // Параметры курса
 $courseid = required_param('courseid', PARAM_INT);
-
-// Параметры поиска/сортировки
 $search = optional_param('search', '', PARAM_TEXT);
 $sort   = optional_param('sort', 'time_desc', PARAM_ALPHANUMEXT);
 
@@ -18,15 +16,7 @@ $PAGE->set_heading("Время, проведенное на платформе")
 
 // WHERE для поиска
 $where_search = '';
-$params = [
-    'courseid' => $courseid,
-];
-
-// (3) Если хотите ограничить логи по времени (скажем, последние 90 дней):
-// $where_time = " AND log.timecreated > :logsince ";
-// $params['logsince'] = time() - 90*86400;
-// И включите $where_time в запрос (см. ниже).
-
+$params = ['courseid' => $courseid];
 if (!empty($search)) {
     $where_search = " AND (u.firstname LIKE :s1 OR u.lastname LIKE :s2)";
     $params['s1'] = '%'.$search.'%';
@@ -54,7 +44,6 @@ switch ($sort) {
 }
 
 // Алгоритм 10-минутных сессий
-// Добавляем log_next.courseid=log.courseid и лог.ограничение
 $sql = "
     SELECT
         u.id,
@@ -72,7 +61,6 @@ $sql = "
     JOIN {logstore_standard_log} log
          ON log.userid = u.id
          AND log.courseid = :courseid
-         -- $where_time если нужно ограничить лог
     LEFT JOIN {logstore_standard_log} log_next
          ON log_next.userid = log.userid
          AND log_next.courseid = log.courseid
@@ -89,8 +77,15 @@ $sql = "
     $order_by
 ";
 
-// Выполняем запрос
 $time_spent_users = $DB->get_records_sql($sql, $params);
+
+// Подготавливаем данные для графика
+$chart_labels = [];
+$chart_data = [];
+foreach ($time_spent_users as $user) {
+    $chart_labels[] = "{$user->firstname} {$user->lastname}";
+    $chart_data[] = round((int)$user->time_spent / 3600, 2); // Время в часах
+}
 
 // Вывод
 echo $OUTPUT->header();
@@ -155,30 +150,87 @@ echo $OUTPUT->header();
                     <th>#</th>
                     <th>Имя</th>
                     <th>Фамилия</th>
-                    <th>Время (часы:минуты)</th>
+                    <th>Время (часы)</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php
                 $i = 1;
                 foreach ($time_spent_users as $user) {
-                    $total_seconds = (int)$user->time_spent;
-                    $hours   = floor($total_seconds / 3600);
-                    $minutes = floor(($total_seconds % 3600) / 60);
+                    $hours = round((int)$user->time_spent / 3600, 2);
                     ?>
                     <tr>
                         <td><?php echo $i++; ?></td>
                         <td><?php echo s($user->firstname); ?></td>
                         <td><?php echo s($user->lastname); ?></td>
-                        <td><?php echo "{$hours} ч {$minutes} мин"; ?></td>
+                        <td><?php echo "{$hours} ч"; ?></td>
                     </tr>
                 <?php } ?>
                 </tbody>
             </table>
         <?php endif; ?>
     </div>
+
+    <!-- График -->
+    <h3 style="text-align: center; margin-top: 20px;">Время на платформе (часы)</h3>
+    <div style="position: relative; height: 400px; width: 100%; margin: auto;">
+        <canvas id="timeSpentChart"></canvas>
+    </div>
 </section>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const timeSpentCtx = document.getElementById('timeSpentChart').getContext('2d');
+    const timeSpentChart = new Chart(timeSpentCtx, {
+        type: 'bar',
+        data: {
+            labels: <?php echo json_encode($chart_labels); ?>,
+            datasets: [{
+                label: 'Время на платформе (часы)',
+                data: <?php echo json_encode($chart_data); ?>,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Пользователи'
+                    },
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 0
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Часы'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return `${tooltipItem.raw} часов`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

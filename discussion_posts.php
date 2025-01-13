@@ -57,6 +57,14 @@ $sql = "
 
 $discussion_posts = $DB->get_records_sql($sql, $params);
 
+// Подготовка данных для графика
+$chart_labels = [];
+$chart_data = [];
+foreach ($discussion_posts as $user) {
+    $chart_labels[] = "{$user->firstname} {$user->lastname}";
+    $chart_data[] = $user->posts_count;
+}
+
 // Вывод страницы
 echo $OUTPUT->header();
 ?>
@@ -65,12 +73,12 @@ echo $OUTPUT->header();
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Сообщения пользователей</title>
 </head>
 <body>
 <section class="bar">
-    <p class="label-stats">Статистика</p><br><br>
+    <p class="label-stats">Статистика</p>
 </section>
 
 <section class="info discussion-info"
@@ -132,9 +140,46 @@ echo $OUTPUT->header();
             </table>
         <?php endif; ?>
     </div>
+
+    <!-- График -->
+    <div style="max-width: 800px; margin: auto; padding-top: 20px;">
+        <h3>Сообщения пользователей</h3>
+        <canvas id="discussionChart"></canvas>
+    </div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const ctx = document.getElementById('discussionChart').getContext('2d');
+    const discussionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: <?php echo json_encode($chart_labels); ?>,
+            datasets: [{
+                label: 'Количество сообщений',
+                data: <?php echo json_encode($chart_data); ?>,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderWidth: 2,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Пользователи' },
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Сообщения' },
+                },
+            },
+        },
+    });
+</script>
 </body>
 </html>
 
