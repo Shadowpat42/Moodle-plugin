@@ -56,7 +56,29 @@ $sql = "
 
 $active_users = $DB->get_records_sql($sql, $params);
 
-// Вывод страницы
+// Данные для графика
+$time_intervals = [];
+$active_counts = [];
+$now = time();
+for ($i = 10; $i >= 0; $i--) {
+    $start_time = $now - ($i * 1800); // Каждые 30 минут
+    $end_time = $now - (($i - 1) * 1800);
+
+    $interval_count = $DB->count_records_sql("
+        SELECT COUNT(DISTINCT log.userid)
+        FROM {logstore_standard_log} log
+        WHERE log.courseid = :courseid
+          AND log.timecreated BETWEEN :start_time AND :end_time
+    ", [
+        'courseid' => $courseid,
+        'start_time' => $start_time,
+        'end_time' => $end_time,
+    ]);
+
+    $time_intervals[] = date('H:i', $start_time);
+    $active_counts[] = $interval_count;
+}
+
 echo $OUTPUT->header();
 ?>
 <!DOCTYPE html>
@@ -65,6 +87,7 @@ echo $OUTPUT->header();
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Активные пользователи</title>
 </head>
 <body>
@@ -76,11 +99,9 @@ echo $OUTPUT->header();
          style="border: 10px solid #B9FAFA; padding: 30px; border-radius: 20px; max-width: 1050px; margin: auto;">
     <h2 style="border-bottom: 5px solid #B9FAFA; padding-bottom: 15px;">Активные пользователи</h2>
 
-    <!-- Форма поиска и сортировки -->
     <form method="get" action="active_users.php" class="row g-3 mb-4">
         <input type="hidden" name="courseid" value="<?php echo $courseid; ?>">
 
-        <!-- Поле поиска -->
         <div class="col-md-4">
             <div class="input-group">
                 <span class="input-group-text">Поиск</span>
@@ -89,7 +110,6 @@ echo $OUTPUT->header();
             </div>
         </div>
 
-        <!-- Сортировка -->
         <div class="col-md-4">
             <select name="sort" class="form-select">
                 <option value="name_asc" <?php echo ($sort == 'name_asc') ? 'selected' : ''; ?>>Имя (А-Я)</option>
@@ -131,12 +151,53 @@ echo $OUTPUT->header();
             </table>
         <?php endif; ?>
     </div>
+
+    <!-- График -->
+    <div style="max-width: 800px; margin: auto; padding-top: 20px;">
+        <h3>Активность пользователей за последние 5 часов</h3>
+        <canvas id="activeUsersChart"></canvas>
+    </div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const timeLabels = <?php echo json_encode($time_intervals); ?>;
+    const activeCounts = <?php echo json_encode($active_counts); ?>;
+
+    const ctx = document.getElementById('activeUsersChart').getContext('2d');
+    const activeUsersChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [{
+                label: 'Активные пользователи',
+                data: activeCounts,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 2,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Время (по интервалам)' },
+                },
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Количество пользователей' },
+                },
+            },
+        },
+    });
+</script>
 </body>
 </html>
 
 <?php
 echo $OUTPUT->footer();
 ?>
+
