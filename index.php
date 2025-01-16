@@ -33,7 +33,7 @@ $online_users = $DB->get_records_sql("
 ]);
 $online_count = count($online_users);
 
-// Оставляем только первых двух пользователей для отображения
+// Оставляем только первых двух пользователей
 $online_users = array_slice($online_users, 0, 2, true);
 
 // 2. Средний прогресс пользователей
@@ -84,47 +84,55 @@ foreach ($visits as $visit) {
     $visitors_html .= "<div>{$visit->firstname} {$visit->lastname} - {$visit->visits} посещений</div>";
 }
 
-// 4. Время, проведённое на платформе (берём всех, потом урежем)
-$timespent = $DB->get_records_sql("
-    SELECT u.id, u.firstname, u.lastname, 
-           SUM(
-               CASE
-                 WHEN log_next.timecreated - log.timecreated > 0 
-                      AND log_next.timecreated - log.timecreated <= 600
-                 THEN log_next.timecreated - log.timecreated
-                 ELSE 0
-               END
-           ) AS time_spent
+// 4. Время, проведённое на платформе
+// ========== Замена на улучшенный вариант из time_spent.php ==========
+$timespent_sql = "
+    SELECT
+        u.id,
+        u.firstname,
+        u.lastname,
+        SUM(
+            CASE
+                WHEN (log_next.timecreated - log.timecreated) > 0
+                     AND (log_next.timecreated - log.timecreated) <= 600
+                THEN (log_next.timecreated - log.timecreated)
+                ELSE 0
+            END
+        ) AS time_spent
     FROM {user} u
-    JOIN {logstore_standard_log} log ON log.userid = u.id
-    LEFT JOIN {logstore_standard_log} log_next 
-           ON log_next.userid = log.userid
-          AND log_next.timecreated > log.timecreated
-          AND log_next.timecreated = (
-              SELECT MIN(log_inner.timecreated)
-              FROM {logstore_standard_log} log_inner
-              WHERE log_inner.userid = log.userid
-                AND log_inner.timecreated > log.timecreated
-          )
-    WHERE log.courseid = :courseid
+    JOIN {logstore_standard_log} log
+         ON log.userid = u.id
+         AND log.courseid = :courseid
+    LEFT JOIN {logstore_standard_log} log_next
+         ON log_next.userid = log.userid
+         AND log_next.courseid = log.courseid
+         AND log_next.timecreated = (
+             SELECT MIN(li.timecreated)
+             FROM {logstore_standard_log} li
+             WHERE li.userid = log.userid
+               AND li.courseid = log.courseid
+               AND li.timecreated > log.timecreated
+         )
     GROUP BY u.id, u.firstname, u.lastname
     ORDER BY time_spent DESC
-", ['courseid' => $courseid]);
+";
 
-// Оставляем 2
-$timespent = array_slice($timespent, 0, 2, true);
+$timespent_data = $DB->get_records_sql($timespent_sql, ['courseid' => $courseid]);
 
-// Генерируем $time_html для двух
+// Оставляем только двух пользователей с наибольшим временем
+$timespent_data = array_slice($timespent_data, 0, 2, true);
+
 $time_html = '';
-foreach ($timespent as $time) {
+foreach ($timespent_data as $time) {
+    $hours = floor($time->time_spent / 3600);
+    $minutes = floor(($time->time_spent % 3600) / 60);
     if ($time->time_spent) {
-        $hours = floor($time->time_spent / 3600);
-        $minutes = floor(($time->time_spent % 3600) / 60);
         $time_html .= "<div>{$time->firstname} {$time->lastname} - {$hours} ч. {$minutes} мин.</div>";
     } else {
         $time_html .= "<div>{$time->firstname} {$time->lastname} - Нет данных</div>";
     }
 }
+// ========== Конец замены ==========
 
 // 5. Общее количество сообщений
 $total_posts = $DB->get_field_sql("
@@ -137,114 +145,110 @@ $total_posts = $DB->get_field_sql("
 // Выводим шапку страницы
 echo $OUTPUT->header();
 ?>
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="utf-8">
-        <link rel="stylesheet" href="css/styles.css">
-        <title>Статистика для курса</title>
-    </head>
-    <body>
-    <section class="bar">
-        <p class="label-stats">Статистика</p>
-    </section>
-    <section class="stats">
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/styles.css">
+    <title>Статистика для курса</title>
+</head>
+<body>
+<section class="bar">
+    <p class="label-stats">Статистика</p>
+</section>
+<section class="stats">
 
-        <!-- Активность пользователей -->
-        <div class="stats-panel activity" style="background: #E2FEFE;">
-            <p class="panel-label">Активность пользователей</p>
-            <div class="panel-content">
-                <div>Сейчас онлайн:</div>
-                <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 5px;">
-                    <!-- Показываем общий count, если нужно, но выводим только 2 снизу -->
-                    <?php echo $online_count; ?>
-                    <img src="img/Vector.svg" width="29px" height="23px">
-                </div>
-                <?php
-                // Если хотите на главной странице показать *кто* эти 2, можно подобно visits/time
-                // Но в вашем коде изначально только $online_count выводится
-                ?>
-            </div>
-            <div class="panel-footer" style="background: #B9FAFA;">
-                <a href="active_users.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
-                        Открыть
-                    </button>
-                </a>
+    <!-- Активность пользователей -->
+    <div class="stats-panel activity" style="background: #E2FEFE;">
+        <p class="panel-label">Активность пользователей</p>
+        <div class="panel-content">
+            <div>Сейчас онлайн:</div>
+            <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 5px;">
+                <?php echo $online_count; ?>
+                <img src="img/Vector.svg" width="29px" height="23px">
             </div>
         </div>
+        <div class="panel-footer" style="background: #B9FAFA;">
+            <a href="active_users.php?courseid=<?php echo $courseid; ?>">
+                <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    Открыть
+                </button>
+            </a>
+        </div>
+    </div>
 
-        <!-- Средний прогресс пользователей -->
-        <div class="stats-panel discussion" style="background: #FCE5CD;">
-            <p class="panel-label">Прогресс пользователей</p>
-            <div class="panel-content">
-                <div>Средний % прохождения курса:</div>
-                <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 10px;">
-                    <?php echo $average_progress; ?>%
-                </div>
-            </div>
-            <div class="panel-footer" style="background: #FDC896;">
-                <a href="progress_users.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
-                        Открыть
-                    </button>
-                </a>
+    <!-- Средний прогресс пользователей -->
+    <div class="stats-panel discussion" style="background: #FCE5CD;">
+        <p class="panel-label">Прогресс пользователей</p>
+        <div class="panel-content">
+            <div>Средний % прохождения курса:</div>
+            <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 10px;">
+                <?php echo $average_progress; ?>%
             </div>
         </div>
+        <div class="panel-footer" style="background: #FDC896;">
+            <a href="progress_users.php?courseid=<?php echo $courseid; ?>">
+                <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    Открыть
+                </button>
+            </a>
+        </div>
+    </div>
 
-        <!-- Количество посещений (2 пользователя) -->
-        <div class="stats-panel visitors" style="background: #FEFFD0;">
-            <p class="panel-label">Количество посещений</p>
-            <div class="panel-content">
-                <?php echo $visitors_html; ?>
-            </div>
-            <div class="panel-footer" style="background: #EEED83;">
-                <a href="visits_users.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
-                        Открыть
-                    </button>
-                </a>
+    <!-- Количество посещений (2 пользователя) -->
+    <div class="stats-panel visitors" style="background: #FEFFD0;">
+        <p class="panel-label">Количество посещений</p>
+        <div class="panel-content">
+            <?php echo $visitors_html; ?>
+        </div>
+        <div class="panel-footer" style="background: #EEED83;">
+            <a href="visits_users.php?courseid=<?php echo $courseid; ?>">
+                <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    Открыть
+                </button>
+            </a>
+        </div>
+    </div>
+
+    <!-- Время, проведенное на платформе (2 пользователя, улучшенный алгоритм) -->
+    <div class="stats-panel time" style="background: #ECD0EF;">
+        <p class="panel-label">Время, проведенное на платформе</p>
+        <div class="panel-content">
+            <?php echo $time_html; ?>
+        </div>
+        <div class="panel-footer" style="background: #EDA3EA;">
+            <a href="time_spent.php?courseid=<?php echo $courseid; ?>">
+                <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    Открыть
+                </button>
+            </a>
+        </div>
+    </div>
+
+    <!-- Общее количество сообщений -->
+    <div class="stats-panel discussion" style="background: #F4D4D4;">
+        <p class="panel-label">Сообщения пользователей</p>
+        <div class="panel-content">
+            <div>Общее количество сообщений:</div>
+            <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 10px;">
+                <?php echo $total_posts; ?>
+                <img src='img/message.svg' alt='Сообщения' style='margin-left: 10px; width="25px" height="20px";'>
             </div>
         </div>
-
-        <!-- Время, проведенное (2 пользователя) -->
-        <div class="stats-panel time" style="background: #ECD0EF;">
-            <p class="panel-label">Время, проведенное на платформе</p>
-            <div class="panel-content">
-                <?php echo $time_html; ?>
-            </div>
-            <div class="panel-footer" style="background: #EDA3EA;">
-                <a href="time_spent.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
-                        Открыть
-                    </button>
-                </a>
-            </div>
+        <div class="panel-footer" style="background: #F5A7A7;">
+            <a href="discussion_posts.php?courseid=<?php echo $courseid; ?>">
+                <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    Открыть
+                </button>
+            </a>
         </div>
+    </div>
 
-        <!-- Общее количество сообщений -->
-        <div class="stats-panel discussion" style="background: #F4D4D4;">
-            <p class="panel-label">Сообщения пользователей</p>
-            <div class="panel-content">
-                <div>Общее количество сообщений:</div>
-                <div style="font-size: 32px; font-weight: 300; text-align: center; margin-top: 10px;">
-                    <?php echo $total_posts; ?>
-                    <img src='img/message.svg' alt='Сообщения' style='margin-left: 10px; width="25px" height="20px";'>
-                </div>
-            </div>
-            <div class="panel-footer" style="background: #F5A7A7;">
-                <a href="discussion_posts.php?courseid=<?php echo $courseid; ?>">
-                    <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
-                        Открыть
-                    </button>
-                </a>
-            </div>
-        </div>
-
-    </section>
-    </body>
-    </html>
+</section>
+</body>
+</html>
 
 <?php
 // Выводим подвал страницы
 echo $OUTPUT->footer();
+?>
