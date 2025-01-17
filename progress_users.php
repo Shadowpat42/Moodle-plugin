@@ -6,7 +6,8 @@ $courseid = required_param('courseid', PARAM_INT);
 
 // Параметры поиска/сортировки
 $search = optional_param('search', '', PARAM_TEXT);
-$sort   = optional_param('sort', 'progress_desc', PARAM_ALPHANUMEXT);
+$sort = optional_param('sort', 'progress_desc', PARAM_ALPHANUMEXT);
+$grade_filter = optional_param('grade_filter', '', PARAM_INT);
 
 // Проверки Moodle
 require_login($courseid);
@@ -33,6 +34,25 @@ if (!empty($search)) {
     $where_search = " AND (u.firstname LIKE :s1 OR u.lastname LIKE :s2)";
     $params['s1'] = '%' . $search . '%';
     $params['s2'] = '%' . $search . '%';
+}
+
+// Фильтр по оценке
+$grade_filter_sql = '';
+if (!empty($grade_filter)) {
+    switch ($grade_filter) {
+        case '5':
+            $grade_filter_sql = "HAVING progress BETWEEN 80 AND 100";
+            break;
+        case '4':
+            $grade_filter_sql = "HAVING progress BETWEEN 60 AND 79";
+            break;
+        case '3':
+            $grade_filter_sql = "HAVING progress BETWEEN 40 AND 59";
+            break;
+        case '2':
+            $grade_filter_sql = "HAVING progress < 40";
+            break;
+    }
 }
 
 // ORDER BY
@@ -68,6 +88,11 @@ $sql = "
     $order_by
 ";
 
+// Добавляем фильтрацию по прогрессу
+if (!empty($grade_filter)) {
+    $sql .= " $grade_filter_sql";
+}
+
 $params['total_activities'] = $total_activities;
 $progress_users = $DB->get_records_sql($sql, $params);
 
@@ -86,37 +111,36 @@ echo $OUTPUT->header();
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <!-- Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/styles.css">
     <title>Прогресс пользователей</title>
+    <style>
+        .table { border-radius: 10px; overflow: hidden; }
+        .progress { height: 20px; border-radius: 10px; }
+        .progress-bar { text-align: center; line-height: 20px; border-radius: 10px; }
+        .form-select, .input-group-text, .input-group input { border-radius: 5px; }
+    </style>
 </head>
 <body>
-<section class="bar">
-    <p class="label-stats" style="margin-bottom: 20px">Статистика</p>
-</section>
+<section class="info progress-info" style="border: 10px solid #FDC896; padding: 30px; max-width: 1050px; margin: auto;">
+    <h2 style="border-bottom: 5px solid #FDC896;">Прогресс пользователей</h2>
 
-<section class="info progress-info"
-         style="border: 10px solid #FDC896; padding: 30px; border-radius: 20px; max-width: 1050px; margin: auto;">
-    <h2 style="border-bottom: 5px solid #FDC896; padding-bottom: 15px;">
-        Прогресс пользователей
-    </h2>
-
-    <!-- Форма поиска и сортировки -->
     <form method="get" action="progress_users.php" class="row g-3 mb-4">
         <input type="hidden" name="courseid" value="<?php echo $courseid; ?>">
-
-        <!-- Поиск -->
         <div class="col-md-4">
             <div class="input-group">
                 <span class="input-group-text">Поиск</span>
-                <input type="text" name="search" class="form-control"
-                       placeholder="Имя или фамилия"
-                       value="<?php echo s($search); ?>">
+                <input type="text" name="search" class="form-control" placeholder="Имя или фамилия" value="<?php echo s($search); ?>">
             </div>
         </div>
-
-        <!-- Сортировка -->
+        <div class="col-md-4">
+            <select name="grade_filter" class="form-select">
+                <option value="">Выберите оценку</option>
+                <option value="5" <?php if ($grade_filter == '5') echo 'selected'; ?>>Оценка 5</option>
+                <option value="4" <?php if ($grade_filter == '4') echo 'selected'; ?>>Оценка 4</option>
+                <option value="3" <?php if ($grade_filter == '3') echo 'selected'; ?>>Оценка 3</option>
+                <option value="2" <?php if ($grade_filter == '2') echo 'selected'; ?>>Оценка 2</option>
+            </select>
+        </div>
         <div class="col-md-4">
             <select name="sort" class="form-select">
                 <option value="progress_desc" <?php if ($sort == 'progress_desc') echo 'selected'; ?>>Прогресс (убывание)</option>
@@ -125,13 +149,11 @@ echo $OUTPUT->header();
                 <option value="name_desc" <?php if ($sort == 'name_desc') echo 'selected'; ?>>Имя (Я-А)</option>
             </select>
         </div>
-
         <div class="col-md-4">
             <button type="submit" class="btn btn-primary w-100">Применить</button>
         </div>
     </form>
 
-    <!-- Таблица результатов -->
     <div class="data-container">
         <?php if (empty($progress_users)): ?>
             <p>Нет данных о прогрессе пользователей.</p>
@@ -142,31 +164,32 @@ echo $OUTPUT->header();
                     <th>#</th>
                     <th>Имя</th>
                     <th>Фамилия</th>
-                    <th>Прогресс (%)</th>
+                    <th>Прогресс</th>
                 </tr>
                 </thead>
                 <tbody>
-                <?php
-                $i = 1;
-                foreach ($progress_users as $user) {
-                    ?>
+                <?php $i = 1; foreach ($progress_users as $user): ?>
                     <tr>
                         <td><?php echo $i++; ?></td>
                         <td><?php echo s($user->firstname); ?></td>
                         <td><?php echo s($user->lastname); ?></td>
-                        <td><?php echo round($user->progress, 2); ?>%</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" style="width: <?php echo round($user->progress, 2); ?>%;" aria-valuenow="<?php echo round($user->progress, 2); ?>" aria-valuemin="0" aria-valuemax="100">
+                                    <?php echo round($user->progress, 2); ?>%
+                                </div>
+                            </div>
+                        </td>
                     </tr>
-                <?php } ?>
+                <?php endforeach; ?>
                 </tbody>
             </table>
         <?php endif; ?>
     </div>
 
-    <!-- График -->
     <h3 style="text-align: center; margin-top: 20px;">График прогресса пользователей</h3>
     <canvas id="progressChart"></canvas>
 </section>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const ctx = document.getElementById('progressChart').getContext('2d');
@@ -184,22 +207,10 @@ echo $OUTPUT->header();
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100
-                }
-            }
+            scales: { y: { beginAtZero: true, max: 100 } }
         }
     });
 </script>
 </body>
 </html>
-<?php
-echo $OUTPUT->footer();
-?>
+<?php echo $OUTPUT->footer(); ?>
