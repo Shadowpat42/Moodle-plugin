@@ -36,24 +36,6 @@ if (!empty($search)) {
     $params['s2'] = '%' . $search . '%';
 }
 
-// Фильтр по оценке
-$grade_filter_sql = '';
-if (!empty($grade_filter)) {
-    switch ($grade_filter) {
-        case '5':
-            $grade_filter_sql = "HAVING progress BETWEEN 80 AND 100";
-            break;
-        case '4':
-            $grade_filter_sql = "HAVING progress BETWEEN 60 AND 79";
-            break;
-        case '3':
-            $grade_filter_sql = "HAVING progress BETWEEN 40 AND 59";
-            break;
-        case '2':
-            $grade_filter_sql = "HAVING progress < 40";
-            break;
-    }
-}
 
 // ORDER BY
 $order_by = '';
@@ -88,6 +70,37 @@ $sql = "
     $order_by
 ";
 
+// Фильтр по оценке
+$grade_filter_sql = '';
+if (!empty($grade_filter)) {
+    switch ($grade_filter) {
+        case '5':
+            $sql = "
+                SELECT * FROM ($sql) AS progress_data
+                WHERE progress BETWEEN 80 AND 100
+            ";
+            break;
+        case '4':
+            $sql = "
+                SELECT * FROM ($sql) AS progress_data
+                WHERE progress BETWEEN 60 AND 79
+            ";
+            break;
+        case '3':
+            $sql = "
+                SELECT * FROM ($sql) AS progress_data
+                WHERE progress BETWEEN 40 AND 59
+            ";
+            break;
+        case '2':
+            $sql = "
+                SELECT * FROM ($sql) AS progress_data
+                WHERE progress < 40
+            ";
+            break;
+    }
+}
+
 // Добавляем фильтрацию по прогрессу
 if (!empty($grade_filter)) {
     $sql .= " $grade_filter_sql";
@@ -114,10 +127,25 @@ echo $OUTPUT->header();
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <title>Прогресс пользователей</title>
     <style>
-        .table { border-radius: 10px; overflow: hidden; }
-        .progress { height: 20px; border-radius: 10px; }
-        .progress-bar { text-align: center; line-height: 20px; border-radius: 10px; }
-        .form-select, .input-group-text, .input-group input { border-radius: 5px; }
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 20px;
+            border-radius: 10px;
+        }
+
+        .progress-bar {
+            text-align: center;
+            line-height: 20px;
+            border-radius: 10px;
+        }
+
+        .form-select, .input-group-text, .input-group input {
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -129,7 +157,8 @@ echo $OUTPUT->header();
         <div class="col-md-4">
             <div class="input-group">
                 <span class="input-group-text">Поиск</span>
-                <input type="text" name="search" class="form-control" placeholder="Имя или фамилия" value="<?php echo s($search); ?>">
+                <input type="text" name="search" class="form-control" placeholder="Имя или фамилия"
+                       value="<?php echo s($search); ?>">
             </div>
         </div>
         <div class="col-md-4">
@@ -143,8 +172,12 @@ echo $OUTPUT->header();
         </div>
         <div class="col-md-4">
             <select name="sort" class="form-select">
-                <option value="progress_desc" <?php if ($sort == 'progress_desc') echo 'selected'; ?>>Прогресс (убывание)</option>
-                <option value="progress_asc" <?php if ($sort == 'progress_asc') echo 'selected'; ?>>Прогресс (возрастание)</option>
+                <option value="progress_desc" <?php if ($sort == 'progress_desc') echo 'selected'; ?>>Прогресс
+                    (убывание)
+                </option>
+                <option value="progress_asc" <?php if ($sort == 'progress_asc') echo 'selected'; ?>>Прогресс
+                    (возрастание)
+                </option>
                 <option value="name_asc" <?php if ($sort == 'name_asc') echo 'selected'; ?>>Имя (А-Я)</option>
                 <option value="name_desc" <?php if ($sort == 'name_desc') echo 'selected'; ?>>Имя (Я-А)</option>
             </select>
@@ -168,14 +201,18 @@ echo $OUTPUT->header();
                 </tr>
                 </thead>
                 <tbody>
-                <?php $i = 1; foreach ($progress_users as $user): ?>
+                <?php $i = 1;
+                foreach ($progress_users as $user): ?>
                     <tr>
                         <td><?php echo $i++; ?></td>
                         <td><?php echo s($user->firstname); ?></td>
                         <td><?php echo s($user->lastname); ?></td>
                         <td>
                             <div class="progress" style="height: 20px;">
-                                <div class="progress-bar" role="progressbar" style="width: <?php echo round($user->progress, 2); ?>%;" aria-valuenow="<?php echo round($user->progress, 2); ?>" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: <?php echo round($user->progress, 2); ?>%;"
+                                     aria-valuenow="<?php echo round($user->progress, 2); ?>" aria-valuemin="0"
+                                     aria-valuemax="100">
                                     <?php echo round($user->progress, 2); ?>%
                                 </div>
                             </div>
@@ -207,7 +244,7 @@ echo $OUTPUT->header();
         },
         options: {
             responsive: true,
-            scales: { y: { beginAtZero: true, max: 100 } }
+            scales: {y: {beginAtZero: true, max: 100}}
         }
     });
 </script>
