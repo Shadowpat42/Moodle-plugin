@@ -142,6 +142,12 @@ $total_posts = $DB->get_field_sql("
     WHERE d.course = :courseid
 ", ['courseid' => $courseid]);
 
+# список пользователей
+
+
+
+
+
 // Выводим шапку страницы
 echo $OUTPUT->header();
 ?>
@@ -243,6 +249,23 @@ echo $OUTPUT->header();
             </a>
         </div>
     </div>
+
+    <!-- Индивидуальная статистика -->
+    <div class="stats-panel individual-statistics" style="background: #F1F1F1;">
+        <p class="panel-label">Индивидуальная статистика</p>
+        <div class="panel-content">
+            <div>Просмотреть статистику по отдельным пользователям курса</div>
+        </div>
+        <div class="panel-footer" style="background: #E4E4E4;">
+            <a href="user_statistics.php?courseid=<?php echo $courseid; ?>">
+                <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
+                    Открыть
+                </button>
+            </a>
+        </div>
+    </div>
+
+
 
 </section>
 </body>
