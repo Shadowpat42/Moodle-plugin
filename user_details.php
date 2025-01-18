@@ -11,6 +11,16 @@ require_login();
 // Получаем данные пользователя
 $user = $DB->get_record('user', ['id' => $userid]);
 
+// Получаем профильную фотографию пользователя (если она есть)
+$profile_picture_url = moodle_url::make_pluginfile_url(
+    $user->contextid,
+    'user',
+    'icon',
+    0,
+    '/',
+    $user->id . '.jpg'
+)->out();
+
 // Устанавливаем контекст страницы
 $PAGE->set_context(context_user::instance($userid));
 
@@ -46,17 +56,23 @@ echo $OUTPUT->header();
         <div class="row d-flex justify-content-center">
             <div class="col col-lg-9 col-xl-8">
                 <div class="card">
-                    <div class="rounded-top text-white d-flex flex-column align-items-center" style="background-color: #007bff; height: 200px;">
-                        <div class="mt-5">
-                            <!-- Место для персонализированного текста -->
-                            <h5 class="text-white"><?php echo fullname($user); ?></h5>
-                            <p class="text-white"><?php echo $user->city ? $user->city : 'Не указано'; ?></p>
-                            <p class="text-white"><?php echo $user->email ? $user->email : 'Не указан'; ?></p>
+                    <div class="rounded-top text-white d-flex flex-row" style="background-color: #000; height:200px;">
+                        <div class="ms-4 mt-5 d-flex flex-column" style="width: 150px;">
+                            <!-- Профильная фотография -->
+                            <img src="<?php echo $profile_picture_url; ?>" alt="Avatar" class="img-fluid img-thumbnail mt-4 mb-2" style="width: 150px; z-index: 1">
+                            <button type="button" class="btn btn-outline-dark text-body" style="z-index: 1;">
+                                Редактировать профиль
+                            </button>
+                        </div>
+                        <div class="ms-3" style="margin-top: 130px;">
+                            <!-- Имя пользователя -->
+                            <h5><?php echo fullname($user); ?></h5>
+                            <p><?php echo $user->city ? $user->city : 'Не указано'; ?></p>
                         </div>
                     </div>
 
                     <div class="p-4 text-black bg-body-tertiary">
-                        <div class="d-flex justify-content-between text-center py-1 text-body">
+                        <div class="d-flex justify-content-end text-center py-1 text-body">
                             <div>
                                 <p class="mb-1 h5"><?php echo $total_posts; ?></p>
                                 <p class="small text-muted mb-0">Сообщений</p>
@@ -77,24 +93,6 @@ echo $OUTPUT->header();
                                 <p class="font-italic mb-0">Описание: <?php echo $user->description ? $user->description : 'Нет описания'; ?></p>
                             </div>
                         </div>
-
-                        <!-- Статистика по курсу -->
-                        <div class="mb-5 text-body">
-                            <p class="lead fw-normal mb-1">Статистика по курсу</p>
-                            <div class="p-4 bg-body-tertiary">
-                                <p class="font-italic mb-1">Завершено курсов: <?php echo get_courses_count($userid); ?></p>
-                                <p class="font-italic mb-1">Прогресс на текущем курсе: <?php echo get_user_course_progress($userid, $courseid); ?>%</p>
-                            </div>
-                        </div>
-
-                        <!-- Статистика активности (время проведённое в курсе) -->
-                        <div class="mb-5 text-body">
-                            <p class="lead fw-normal mb-1">Активность на платформе</p>
-                            <div class="p-4 bg-body-tertiary">
-                                <p class="font-italic mb-1">Время на платформе: <?php echo get_time_spent_on_platform($userid, $courseid); ?></p>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -108,36 +106,4 @@ echo $OUTPUT->header();
 <?php
 // Выводим подвал страницы
 echo $OUTPUT->footer();
-
-// Функции для получения статистики
-function get_courses_count($userid) {
-    global $DB;
-    $count = $DB->count_records('user_enrolments', ['userid' => $userid]);
-    return $count;
-}
-
-function get_user_course_progress($userid, $courseid) {
-    global $DB;
-    // Получаем прогресс (например, завершённые модули)
-    $completed = $DB->count_records('course_modules_completion', ['userid' => $userid, 'course' => $courseid, 'completionstate' => 1]);
-    $total_modules = $DB->count_records('course_modules', ['course' => $courseid]);
-    $progress = $total_modules ? round(($completed / $total_modules) * 100, 2) : 0;
-    return $progress;
-}
-
-function get_time_spent_on_platform($userid, $courseid) {
-    global $DB;
-    // Получаем суммарное время, которое пользователь провел на платформе
-    $time = $DB->get_field_sql("
-        SELECT SUM(log_next.timecreated - log.timecreated)
-        FROM {logstore_standard_log} log
-        JOIN {logstore_standard_log} log_next ON log_next.timecreated > log.timecreated
-        WHERE log.userid = :userid AND log.courseid = :courseid
-    ", ['userid' => $userid, 'courseid' => $courseid]);
-
-    // Конвертируем время в часы и минуты
-    $hours = floor($time / 3600);
-    $minutes = floor(($time % 3600) / 60);
-    return "{$hours} ч. {$minutes} мин.";
-}
 ?>
