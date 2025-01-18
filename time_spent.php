@@ -188,21 +188,61 @@ echo $OUTPUT->header();
             datasets: [{
                 label: 'Время на платформе (часы)',
                 data: <?php echo json_encode($chart_data); ?>,
-                backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)', // Красный
+                    'rgba(54, 162, 235, 0.6)', // Голубой
+                    'rgba(255, 206, 86, 0.6)', // Желтый
+                    'rgba(75, 192, 192, 0.6)', // Зеленый
+                    'rgba(153, 102, 255, 0.6)', // Фиолетовый
+                    'rgba(255, 159, 64, 0.6)'  // Оранжевый
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1.5,
+                borderRadius: 8 // Закругленные края столбцов
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false // Скрытие легенды
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return `${tooltipItem.raw} часов`; // Подсказка с указанием часов
+                        }
+                    }
+                }
+            },
             scales: {
                 x: {
                     title: {
                         display: true,
-                        text: 'Пользователи'
+                        text: 'Пользователи',
+                        color: '#333',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.3)', // Лёгкая сетка
+                        borderColor: 'rgba(150, 150, 150, 0.5)'
                     },
                     ticks: {
+                        color: '#333',
                         autoSkip: false,
                         maxRotation: 45,
                         minRotation: 0
@@ -212,25 +252,26 @@ echo $OUTPUT->header();
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Часы'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(tooltipItem) {
-                            return `${tooltipItem.raw} часов`;
+                        text: 'Часы',
+                        color: '#333',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
                         }
+                    },
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.3)', // Лёгкая сетка
+                        borderColor: 'rgba(150, 150, 150, 0.5)'
+                    },
+                    ticks: {
+                        color: '#333'
                     }
                 }
             }
         }
     });
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

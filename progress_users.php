@@ -209,7 +209,7 @@ echo $OUTPUT->header();
                         <td><?php echo s($user->lastname); ?></td>
                         <td>
                             <div class="progress" style="height: 20px;">
-                                <div class="progress-bar" role="progressbar"
+                                <div class="progress-bar bg-warning text-dark" role="progressbar"
                                      style="width: <?php echo round($user->progress, 2); ?>%;"
                                      aria-valuenow="<?php echo round($user->progress, 2); ?>" aria-valuemin="0"
                                      aria-valuemax="100">
@@ -217,6 +217,7 @@ echo $OUTPUT->header();
                                 </div>
                             </div>
                         </td>
+
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -237,17 +238,78 @@ echo $OUTPUT->header();
             datasets: [{
                 label: 'Прогресс (%)',
                 data: <?php echo json_encode($chart_data); ?>,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)', // Красный
+                    'rgba(54, 162, 235, 0.5)', // Голубой
+                    'rgba(255, 206, 86, 0.5)', // Желтый
+                    'rgba(75, 192, 192, 0.5)', // Зеленый
+                    'rgba(153, 102, 255, 0.5)', // Фиолетовый
+                    'rgba(255, 159, 64, 0.5)'  // Оранжевый
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1,
+                borderRadius: 10, // Закругленные углы столбцов
+                barPercentage: 0.7 // Оптимальный размер столбцов
             }]
         },
         options: {
             responsive: true,
-            scales: {y: {beginAtZero: true, max: 100}}
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#333', // Тёмно-серый текст
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff'
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.2)', // Лёгкая сетка
+                        borderColor: 'rgba(150, 150, 150, 0.3)'
+                    },
+                    ticks: {
+                        color: '#333',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.2)', // Лёгкая сетка
+                        borderColor: 'rgba(150, 150, 150, 0.3)'
+                    },
+                    ticks: {
+                        color: '#333',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
         }
     });
 </script>
+
 </body>
 </html>
 <?php echo $OUTPUT->footer(); ?>

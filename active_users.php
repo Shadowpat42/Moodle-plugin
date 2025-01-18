@@ -171,29 +171,83 @@ echo $OUTPUT->header();
             datasets: [{
                 label: 'Активные пользователи',
                 data: activeCounts,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderWidth: 2,
-                tension: 0.4,
+                borderColor: 'rgba(54, 162, 235, 1)', // Яркий голубой
+                backgroundColor: 'rgba(54, 162, 235, 0.2)', // Полупрозрачный голубой
+                borderWidth: 3,
+                tension: 0.4, // Плавные линии
+                pointRadius: 0, // Полностью убирает точки
+                pointHoverRadius: 0 // Не отображает точки при наведении
             }]
         },
         options: {
             responsive: true,
             plugins: {
-                legend: { display: true, position: 'top' },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#333',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 10,
+                }
             },
             scales: {
                 x: {
-                    title: { display: true, text: 'Время (по интервалам)' },
+                    title: {
+                        display: true,
+                        text: 'Время (интервалы)',
+                        color: '#555',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.2)',
+                    },
+                    ticks: {
+                        color: '#333',
+                        font: {
+                            size: 12
+                        }
+                    }
                 },
                 y: {
                     beginAtZero: true,
-                    title: { display: true, text: 'Количество пользователей' },
-                },
-            },
+                    title: {
+                        display: true,
+                        text: 'Количество пользователей',
+                        color: '#555',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.2)',
+                    },
+                    ticks: {
+                        color: '#333',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
         },
     });
+
 </script>
+
 </body>
 </html>
 
