@@ -105,7 +105,7 @@ echo $OUTPUT->header();
 </section>
 
 <section class="info time-info"
-         style="border: 10px solid #EDA3EA; padding: 30px; border-radius: 20px; max-width: 1050px; margin: auto;">
+         style="border: 10px solid #EDA3EA; padding: 30px; border-radius: 20px; max-width: 1050px; margin-top: 60px;">
     <h2 style="border-bottom: 5px solid #EDA3EA; padding-bottom: 15px;">
         Время, проведенное на платформе
     </h2>

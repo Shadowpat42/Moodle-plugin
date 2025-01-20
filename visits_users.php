@@ -74,14 +74,35 @@ echo $OUTPUT->header();
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>Посещения пользователей</title>
+    <style>
+        .label-stats {
+            width: 193px;
+            height: 55px;
+            background: #EEECEC;
+            margin: 0 28px 51px auto;
+            text-align: center;
+            padding-top: 10px;
+            font-size: 20px;
+            font-weight: 300;
+        }
+
+        .bar {
+            width: 1050px;
+            height: 137px;
+            background: #F5F5F5;
+            margin: auto;
+            margin-top: 113px;
+            padding-top: 52px;
+        }
+    </style>
 </head>
 <body>
 <section class="bar">
-    <p class="label-stats">Статистика</p>
+    <p class="label-stats" style="font-weight: 400">Статистика</p>
 </section>
 
 <section class="info visitors-info"
-         style="border: 10px solid #EEED83; padding: 30px; border-radius: 20px; max-width: 1050px; margin: auto;">
+         style="border: 10px solid #EEED83; padding: 30px; border-radius: 20px; max-width: 1050px; margin-top: 60px; margin-left: 160px;">
     <h2 style="border-bottom: 5px solid #EEED83; padding-bottom: 15px;">Посещения пользователей</h2>
 
     <!-- Форма поиска и сортировки -->

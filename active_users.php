@@ -96,7 +96,7 @@ echo $OUTPUT->header();
 </section>
 
 <section class="info progress-info"
-         style="border: 10px solid #B9FAFA; padding: 30px; border-radius: 20px; max-width: 1050px; margin: auto;">
+         style="border: 10px solid #B9FAFA; padding: 30px; border-radius: 20px; max-width: 1050px; margin-top: 60px;">
     <h2 style="border-bottom: 5px solid #B9FAFA; padding-bottom: 15px;">Активные пользователи</h2>
 
     <form method="get" action="active_users.php" class="row g-3 mb-4">
