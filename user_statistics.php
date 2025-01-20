@@ -67,7 +67,7 @@ echo $OUTPUT->header();
 </section>
 
 <section class="info user-list-info"
-         style="border: 10px solid #B3E5FC; padding: 30px; border-radius: 20px; max-width: 1050px; margin: auto;">
+         style="border: 10px solid #B3E5FC; padding: 30px; border-radius: 20px; max-width: 1050px; margin-top: 60px;">
     <h2 style="border-bottom: 5px solid #B3E5FC; padding-bottom: 15px;">Список пользователей</h2>
 
     <form method="get" action="user_statistics.php" class="row g-3 mb-4">
