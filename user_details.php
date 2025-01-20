@@ -85,34 +85,43 @@ echo $OUTPUT->header();
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <title>Профиль пользователя</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .progress-circle-container {
-            position: absolute;
-            right: 20px;
-            top: 37%;
-            transform: translateY(-50%);
-            width: 80px;
-            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            height: 100px;
+            position: relative;
         }
+
         .progress-circle {
             width: 100%;
             height: 100%;
         }
+
         .progress-text {
             position: absolute;
             font-size: 14px;
             font-weight: bold;
             color: #333;
-            width: 100%;
             text-align: center;
             top: 50%;
-            transform: translateY(-50%);
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
+
         .stats-container {
             display: flex;
-            gap: 15px;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .d-flex {
+            display: flex;
         }
     </style>
 </head>
@@ -123,7 +132,8 @@ echo $OUTPUT->header();
         <div class="row d-flex justify-content-center">
             <div class="col col-lg-9 col-xl-8">
                 <div class="card">
-                    <div class="rounded-top text-white d-flex flex-row position-relative" style="background-color: #000; height:200px;">
+                    <div class="rounded-top text-white d-flex flex-row position-relative"
+                         style="background-color: #000; height:200px;">
                         <div class="ms-3" style="margin-top: 130px;">
                             <h5><?php echo fullname($user); ?></h5>
                             <p><?php echo $user->city ? $user->city : 'Не указано'; ?></p>
@@ -131,13 +141,13 @@ echo $OUTPUT->header();
                     </div>
 
                     <div class="p-4 text-black bg-body-tertiary">
-                        <div class="d-flex justify-content-between align-items-center text-body">
-                            <div class="stats-container">
-                                <div>
+                        <div class="d-flex justify-content-between align-items-center text-body flex-wrap">
+                            <div class="stats-container d-flex gap-4">
+                                <div class="text-center">
                                     <p class="mb-1 h5"> <?php echo $total_posts; ?> </p>
                                     <p class="small text-muted mb-0">Сообщений</p>
                                 </div>
-                                <div>
+                                <div class="text-center">
                                     <p class="mb-1 h5"> <?php echo $activity_count; ?> </p>
                                     <p class="small text-muted mb-0">Посещений курса</p>
                                 </div>
@@ -149,19 +159,52 @@ echo $OUTPUT->header();
                         </div>
                     </div>
 
+
                     <div class="card-body p-4 text-black">
-                        <div class="mb-5 text-body">
-                            <p class="lead fw-normal mb-1">О пользователе</p>
-                            <div class="p-4 bg-body-tertiary">
-                                <p class="font-italic mb-1">Роль: <?php echo $role_name; ?></p>
-                                <p class="font-italic mb-1">Дата регистрации: <?php echo $registration_date; ?></p>
-                                <p class="font-italic mb-1">Последняя активность: <?php echo $last_login; ?></p>
-                                <p class="font-italic mb-1">Записан в курсов: <?php echo $course_count; ?></p>
-                                <p class="font-italic mb-1">Средняя оценка: <?php echo $avg_grade; ?></p>
-                                <p class="font-italic mb-1">Завершенных курсов: <?php echo $completed_courses; ?></p>
-                                <p class="font-italic mb-0">Описание: <?php echo $user->description ? $user->description : 'Нет описания'; ?></p>
+                        <div class="card bg-light mb-3">
+                            <div class="card-header text-white bg-primary">
+                                <h5 class="mb-0">Информация о пользователе</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-2">
+                                            <i class="fas fa-user-circle me-2 text-muted"></i>
+                                            <strong>Роль:</strong> <?php echo $role_name; ?>
+                                        </p>
+                                        <p class="mb-2">
+                                            <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                                            <strong>Дата регистрации:</strong> <?php echo $registration_date; ?>
+                                        </p>
+                                        <p class="mb-2">
+                                            <i class="fas fa-clock me-2 text-muted"></i>
+                                            <strong>Последняя активность:</strong> <?php echo $last_login; ?>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-2">
+                                            <i class="fas fa-graduation-cap me-2 text-muted"></i>
+                                            <strong>Записан в курсов:</strong> <?php echo $course_count; ?>
+                                        </p>
+                                        <p class="mb-2">
+                                            <i class="fas fa-star me-2 text-muted"></i>
+                                            <strong>Средняя оценка:</strong> <?php echo $avg_grade; ?>
+                                        </p>
+                                        <p class="mb-2">
+                                            <i class="fas fa-trophy me-2 text-muted"></i>
+                                            <strong>Завершенных курсов:</strong> <?php echo $completed_courses; ?>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <p class="mb-0">
+                                        <i class="fas fa-info-circle me-2 text-muted"></i>
+                                        <strong>Описание:</strong> <?php echo $user->description ? $user->description : 'Нет описания'; ?>
+                                    </p>
+                                </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -187,8 +230,8 @@ echo $OUTPUT->header();
                 cutout: '75%',
                 responsive: false,
                 plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false }
+                    legend: {display: false},
+                    tooltip: {enabled: false}
                 }
             }
         });
