@@ -138,9 +138,30 @@ echo $OUTPUT->header();
         }
 
         .progress-bar {
+            background-color: rgba(255, 159, 64, 1) !important; /* Оранжевый цвет */
             text-align: center;
             line-height: 20px;
             border-radius: 10px;
+        }
+
+        .label-stats {
+            width: 193px;
+            height: 55px;
+            background: #EEECEC;
+            margin: 0 28px 51px auto;
+            text-align: center;
+            padding-top: 10px;
+            font-size: 20px;
+            font-weight: 300;
+        }
+
+        .bar {
+            width: 1050px;
+            height: 137px;
+            background: #F5F5F5;
+            margin: auto;
+            margin-top: 113px;
+            padding-top: 52px;
         }
 
         .form-select, .input-group-text, .input-group input {
@@ -149,7 +170,12 @@ echo $OUTPUT->header();
     </style>
 </head>
 <body>
-<section class="info progress-info" style="border: 10px solid #FDC896; padding: 30px; max-width: 1050px; margin: auto;">
+
+<section class="bar">
+    <p class="label-stats" style="font-weight: 400">Статистика</p>
+</section>
+
+<section class="info progress-info" style="border: 10px solid #FDC896; padding: 30px; max-width: 1050px; margin-top: 60px; margin-left: 160px;">
     <h2 style="border-bottom: 5px solid #FDC896;">Прогресс пользователей</h2>
 
     <form method="get" action="progress_users.php" class="row g-3 mb-4">
@@ -238,22 +264,8 @@ echo $OUTPUT->header();
             datasets: [{
                 label: 'Прогресс (%)',
                 data: <?php echo json_encode($chart_data); ?>,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.5)', // Красный
-                    'rgba(54, 162, 235, 0.5)', // Голубой
-                    'rgba(255, 206, 86, 0.5)', // Желтый
-                    'rgba(75, 192, 192, 0.5)', // Зеленый
-                    'rgba(153, 102, 255, 0.5)', // Фиолетовый
-                    'rgba(255, 159, 64, 0.5)'  // Оранжевый
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
+                backgroundColor: 'rgba(255, 159, 64, 0.7)', // Оранжевый цвет для всех столбцов
+                borderColor: 'rgba(255, 159, 64, 1)', // Оранжевый цвет границ
                 borderWidth: 1,
                 borderRadius: 10, // Закругленные углы столбцов
                 barPercentage: 0.7 // Оптимальный размер столбцов
@@ -309,6 +321,7 @@ echo $OUTPUT->header();
         }
     });
 </script>
+
 
 </body>
 </html>
