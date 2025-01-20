@@ -251,12 +251,12 @@ echo $OUTPUT->header();
     </div>
 
     <!-- Индивидуальная статистика -->
-    <div class="stats-panel individual-statistics" style="background: #F1F1F1;">
+    <div class="stats-panel individual-statistics" style="background: #E2FEFE;">
         <p class="panel-label">Пользователи</p>
         <div class="panel-content">
             <div>Просмотреть статистику по отдельным пользователям курса</div>
         </div>
-        <div class="panel-footer" style="background: #E4E4E4;">
+        <div class="panel-footer" style="background: #B9FAFA;">
             <a href="user_statistics.php?courseid=<?php echo $courseid; ?>">
                 <button style="background: white; border: none; width: 105px; height: 31px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-right: 15px;">
                     Открыть
