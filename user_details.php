@@ -49,17 +49,32 @@ $activity_count = $DB->get_field_sql("
     WHERE log.userid = :userid AND log.courseid = :courseid 
 ", ['userid' => $userid, 'courseid' => $courseid]);
 
-// Получение роли пользователя в контексте курса
+// Получение контекста курса
 $context = context_course::instance($courseid); // Контекст курса
+
+// Проверка существования контекста
+if (!$context) {
+    echo "Контекст курса не найден.";
+    exit;
+}
+
+// Запрос для получения роли
 $roleid = $DB->get_field('role_assignments', 'roleid', [
     'userid' => $userid,
     'contextid' => $context->id
 ]);
 
-$role_name = 'Роль не найдена';
+// Проверка на случай, если роль не найдена
 if ($roleid) {
+    // Получение имени роли из таблицы mdl_role
     $role_name = $DB->get_field('role', 'name', ['id' => $roleid]);
+} else {
+    $role_name = 'Роль не найдена';
 }
+
+// Выводим роль
+echo "Роль пользователя: " . $role_name;
+
 
 // Дата регистрации
 $registration_date = date('d.m.Y', $user->firstaccess);
@@ -123,6 +138,14 @@ echo $OUTPUT->header();
         .d-flex {
             display: flex;
         }
+
+        .profile-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border: 3px solid white;
+            background-color: #f0f0f0; /* Серый фон для заглушки */
+        }
     </style>
 </head>
 <body>
@@ -132,13 +155,16 @@ echo $OUTPUT->header();
         <div class="row d-flex justify-content-center">
             <div class="col col-lg-9 col-xl-8">
                 <div class="card">
-                    <div class="rounded-top text-white d-flex flex-row position-relative"
-                         style="background-color: #000; height:200px;">
-                        <div class="ms-3" style="margin-top: 130px;">
-                            <h5><?php echo fullname($user); ?></h5>
-                            <p><?php echo $user->city ? $user->city : 'Не указано'; ?></p>
+                    <div class="rounded-top text-white d-flex flex-row position-relative" style="background-color: #000; height:200px;">
+                        <div class="ms-3 d-flex align-items-center" style="margin-top: 50px;">
+                            <img src="img/profile_3.png" alt="Профиль пользователя" class="rounded-circle profile-image">
+                            <div class="ms-3">
+                                <h5 class="mb-0"><?php echo fullname($user); ?></h5>
+                                <p  class="text-white mb-0"><?php echo $user->city ? $user->city : 'Не указано'; ?></p>
+                            </div>
                         </div>
                     </div>
+
 
                     <div class="p-4 text-black bg-body-tertiary">
                         <div class="d-flex justify-content-between align-items-center text-body flex-wrap">
