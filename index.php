@@ -252,7 +252,7 @@ echo $OUTPUT->header();
 
     <!-- Индивидуальная статистика -->
     <div class="stats-panel individual-statistics" style="background: #F1F1F1;">
-        <p class="panel-label">Индивидуальная статистика</p>
+        <p class="panel-label">Пользователи</p>
         <div class="panel-content">
             <div>Просмотреть статистику по отдельным пользователям курса</div>
         </div>
